@@ -6,9 +6,10 @@ Specifically, we propose a new method to evaluate the knowledge boundry pf LLMs,
 
 Our method can be even used on **pretrained models** which have a wider range of applications.
 
-“`html
+
 [点击此处下载PDF文件](https://github.com/Turingzero0/ML_Patch/blob/master/patch.pdf)
-“`
+
+https://github.com/Turingzero0/ML_Patch/blob/master/patch.pdf
 
 ## Download data
 
