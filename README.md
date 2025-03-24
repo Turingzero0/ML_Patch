@@ -16,7 +16,7 @@ We use the factual triples sorted out from wikidata.
 
 ## Quick start
 
-By running [api.ipynb](https://github.com/Turingzero0/ML_Patch/blob/master/api.ipynb), you can input the factual knowledge and choose a series of hyperparameter such as `model` and get a pkl and tsv file which contain the final results.
+By running [api.ipynb](https://github.com/Turingzero0/ML_Patch/blob/master/api.ipynb), you can input the factual knowledge and choose a series of hyperparameters such as `model` and get a pkl and tsv file which contain the final results.
 
 ```
 import pandas as pd
@@ -31,3 +31,4 @@ result = Ml_patch(model_name= "/data3/MODELS/gpt-j-6b" , data = df, only_final_r
 result.to_csv("./patch.tsv", sep="\t", index=False)
 result.to_pkl("./patch.pkl")
 ```
+More hyperparameters can be adjusted in [ML_Patch.py](https://github.com/Turingzero0/ML_Patch/blob/master/ML_patch.py)
