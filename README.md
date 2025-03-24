@@ -17,3 +17,17 @@ We use the factual triples sorted out from wikidata.
 ## Quick start
 
 By running [api.ipynb](https://github.com/Turingzero0/ML_Patch/blob/master/api.ipynb), you can input the factual knowledge and choose a series of hyperparameter such as `model` and get a pkl and tsv file which contain the final results.
+
+```
+import pandas as pd
+import io
+import os
+from ML_patch import *
+
+data_ = "id,subject,relation,object\n001,France,capital city of,Paris"
+bytes_io = io.StringIO(data_)
+df = pd.read_csv(bytes_io, sep=",")
+result = Ml_patch(model_name= "/data3/MODELS/gpt-j-6b" , data = df, only_final_result= False)
+result.to_csv("./patch.tsv", sep="\t", index=False)
+result.to_pkl("./patch.pkl")
+```
