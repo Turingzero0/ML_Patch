@@ -2,9 +2,9 @@
 
 We present **ML-Patch**, a new evaluation method of LLMs, which consists of an [online website](http://118.26.161.195:9622/#/) to show our method clealy and a easy-use [toolkit](https://github.com/Turingzero0/ML_Patch/blob/master/api.ipynb).
 
-Specifically, we propose a new method to evaluate the knowledge boundry pf LLMs, which can make better use of the hidden states of LLMs. It is significantly different from today's evaluation methods which most base on prompt.
+Specifically, we propose a new method to evaluate the knowledge boundry pf LLMs, which can make better use of the **hidden states** of LLMs. It is significantly different from today's evaluation methods which most base on prompt.
 
-Our method can be even used on **pretrained models** which have a wider range of applications.
+We test our method on a series of pretrained models, including **llama2-13b** ,**gpt-j-6b**, **Qwen2.5-7b** e.t.c. The results show that our method can effectively evaluate the knowledge of LLMs.
 
 ![image](patch.jpg)
 
@@ -31,4 +31,5 @@ result = Ml_patch(model_name= "/data3/MODELS/gpt-j-6b" , data = df, only_final_r
 result.to_csv("./patch.tsv", sep="\t", index=False)
 result.to_pkl("./patch.pkl")
 ```
+
 More hyperparameters can be adjusted in [ML_Patch.py](https://github.com/Turingzero0/ML_Patch/blob/master/ML_patch.py)
