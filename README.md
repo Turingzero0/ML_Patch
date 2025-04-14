@@ -1,6 +1,6 @@
 # ML-Patch: Carefully Evaluating Hidden Knowledge of Language Models via Multi-layer Patching
 
-We present **ML-Patch**, a new evaluation method of LLMs, which consists of an [online website](http://118.26.161.195:9622/#/) to show our method clealy and a easy-use [toolkit](https://github.com/Turingzero0/ML_Patch/blob/master/api.ipynb).
+We present **ML-Patch**, a new evaluation method of LLMs, which consists of an [online website](http://103.235.229.133:9622/#/) to show our method clealy and a easy-use [toolkit](https://github.com/Turingzero0/ML_Patch/blob/master/api.ipynb).
 
 Specifically, we propose a new method to evaluate the knowledge boundry pf LLMs, which can make better use of the **hidden states** of LLMs. It is significantly different from today's evaluation methods which most base on prompt.
 
