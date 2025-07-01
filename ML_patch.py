@@ -56,8 +56,8 @@ client = ZhipuAI(api_key="")
 
 
 
-def Ml_patch(model_name, data, patch_num = 3, is_icl=False, only_final_result = True):
-  my_device = torch.device("cuda:5")
+def Ml_patch(model_name, data, patch_num = 3, is_icl=False, only_final_result = False,client = None):
+  my_device = torch.device("cuda:4")
   model_to_hook = {
     "EleutherAI/pythia-6.9b": set_hs_patch_hooks_neox,
     "/data3/MODELS/EleutherAI_pythia-12b": set_hs_patch_hooks_neox_batch,
@@ -71,6 +71,7 @@ def Ml_patch(model_name, data, patch_num = 3, is_icl=False, only_final_result = 
     "/data3/MODELS/llama2-hf/llama-2-13b":set_hs_patch_hooks_llama_batch,
     "/data3/MODELS/Mistral-7B-Instruct-v0.2":set_hs_patch_hooks_mistral_batch,
     "/data3/MODELS/Qwen/Qwen2.5-7B-Instruct" : set_hs_patch_hooks_qwen_batch,
+    "/data/tsq/MODELS/Qwen2.5-1.5B-Instruct" : set_hs_patch_hooks_qwen_batch,
 }
   if "13b" in model_name or "12b" in model_name:
     torch_dtype = torch.float16
@@ -91,8 +92,7 @@ def Ml_patch(model_name, data, patch_num = 3, is_icl=False, only_final_result = 
   
   
   
-  def get_prompt_target(subject,relation):
-    return "The " + relation + " x"
+
       
   def get_prompt_source(x):
       subject=x['subject']
@@ -100,11 +100,11 @@ def Ml_patch(model_name, data, patch_num = 3, is_icl=False, only_final_result = 
           response = client.chat.completions.create(
           model="glm-4-flash",  # 请填写您要调用的模型名称
           messages=[
-              {"role": "user", "content": "告诉我一个句子正中间出现"+subject+"的英文句子，不要重复的"},
+              {"role": "user", "content": "Generate exactly one English sentence where the word "+ subject + " appears in the middle (not at the beginning or end). Output only the sentence itself, with no introductory phrases, explanations, or additional text."},
           ],
           )
           position=response.choices[0].message.content.find(subject)
-          if (position != 11 and position <40):
+          if (position <10):
               break
       return response.choices[0].message.content
     
@@ -113,25 +113,31 @@ def Ml_patch(model_name, data, patch_num = 3, is_icl=False, only_final_result = 
     
   def find_subject_position(x):
       prompt_source_cropped_toks = mt.tokenizer.tokenize(x['prompt_source'])
-      subject_list= mt.tokenizer.tokenize(x['subject'])
-      subject="Ġ"+subject_list[-1]
-      try:
-          index = int(prompt_source_cropped_toks.index(subject))
-      except ValueError:
+      text = "The capital city of "+x['subject']
+      subject_list = mt.tokenizer.tokenize(text)
+      subject = subject_list[-1]
+      if x['subject'] in prompt_source_cropped_toks:
+          index = prompt_source_cropped_toks.index(x['subject'])
+      elif 'Ġ' + x['subject'] in prompt_source_cropped_toks:
+          index = prompt_source_cropped_toks.index('Ġ' + x['subject'])
+      elif subject in prompt_source_cropped_toks:
+          index = prompt_source_cropped_toks.index(subject)
+      elif 'Ġ' + subject in prompt_source_cropped_toks:
+          subject = 'Ġ' + subject
+          index = prompt_source_cropped_toks.index(subject)
+      else:
           index = -1
-          
+
       return int(index)
   
   df.reset_index(drop=True, inplace=True)
   df = df.dropna()
   df["prompt_source"]=df.apply(lambda x: get_prompt_source(x),axis=1)
-  df["prompt_target"]=df.apply(lambda x: get_prompt_target(df['subject'],df['relation']),axis=1)
-  print(df)
-  df = df[df['prompt_target'].str.endswith('x')]
-
+  df["prompt_target"] = "The " + df['relation'] + " x"
   df['position_source']=df.apply(lambda x: find_subject_position(x),axis=1)
+  df = df[df['position_source'] > 0].reset_index(drop=True)
+  df = df[df['position_source'] < 10].reset_index(drop=True)
   df['position_target'] = int(-1)
-  print(df)
   batch_size = 256
   # Dropping empty prompt sources. This is an artifact of saving and reloading inputs
   df = df[~df["prompt_source"].apply(lambda x: isinstance(x, float))].reset_index(drop=True)
@@ -140,8 +146,8 @@ def Ml_patch(model_name, data, patch_num = 3, is_icl=False, only_final_result = 
       # BATCHED
   batch = []
   for _, row in tqdm(df.iterrows()):
-      for layer_source in range(mt.num_layers-1):
-          for layer_target in range(mt.num_layers-1):
+      for layer_source in range(mt.num_layers - patch_num + 1):
+          for layer_target in range(mt.num_layers - patch_num  + 1):
               item = dict(row)
               item.update({
                   "layer_source": layer_source,
@@ -153,10 +159,10 @@ def Ml_patch(model_name, data, patch_num = 3, is_icl=False, only_final_result = 
   results_df = experiment_df.head(len(eval_results["is_correct_patched"]))
   for key, value in eval_results.items():
     results_df[key] = list(value)
-  
+
   # evaluate
   target_layer = mt.num_layers - patch_num
-  df = results_df[results_df['layer_source']<target_layer].reset_index(drop=True)
+  df = results_df[results_df['layer_source']<=target_layer].reset_index(drop=True)
   df1 = pd.DataFrame(columns=['subject','prompt_source','prompt_target','layer_source','is_correct_patched','generations'])
   for index, row in df.iterrows():
       if df1.empty:
